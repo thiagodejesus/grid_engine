@@ -84,7 +84,7 @@ impl Debug for ListenerFunction {
 /// `GridEvents` manages a collection of event listeners that are notified
 /// whenever changes occur in the grid. It provides methods to register
 /// and remove listeners, as well as trigger events when changes happen.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct GridEvents {
     /// Collection of registered change event listeners
     changes_listeners: Vec<ListenerFunction>,
@@ -157,14 +157,6 @@ impl GridEvents {
     pub fn trigger_changes_event(&mut self, value: &ChangesEventValue) {
         for listener in &mut self.changes_listeners {
             (listener.function)(value);
-        }
-    }
-}
-
-impl Default for GridEvents {
-    fn default() -> Self {
-        Self {
-            changes_listeners: Vec::new(),
         }
     }
 }
@@ -259,7 +251,7 @@ mod tests {
         events.trigger_changes_event(&event);
 
         let received = received_changes.lock().unwrap();
-        let received_change = received.get(0).unwrap();
+        let received_change = received.first().unwrap();
         assert_eq!(received_change, &change);
     }
 }

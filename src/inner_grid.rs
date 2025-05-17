@@ -28,9 +28,9 @@
 //! The grid automatically expands vertically when needed, allowing for
 //! flexible layout management while maintaining horizontal constraints.
 
+use crate::{error::InnerGridError, node::Node};
 use grid::Grid;
 use std::ops::{Deref, DerefMut};
-use crate::{error::InnerGridError, node::Node};
 
 /// Operation to perform when updating the grid.
 #[derive(Debug, Clone, Copy)]
@@ -134,7 +134,7 @@ impl InnerGrid {
             self.handle_expansion(x, y);
         }
 
-        return self.inner.get(y, x);
+        self.inner.get(y, x)
     }
 
     pub(crate) fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut Option<String>> {
@@ -142,7 +142,7 @@ impl InnerGrid {
             self.handle_expansion(x, y);
         }
 
-        return self.inner.get_mut(y, x);
+        self.inner.get_mut(y, x)
     }
 
     /// Updates a cell in the grid based on the specified operation.
@@ -238,8 +238,9 @@ mod tests {
         };
 
         // First add the node
-        grid.get_mut(1, 1)
-            .map(|cell| *cell = Some("test_node".to_string()));
+        if let Some(cell) = grid.get_mut(1, 1) {
+            *cell = Some("test_node".to_string());
+        }
 
         // Then remove it
         grid.update(&node, 1, 1, UpdateGridOperation::Remove)
@@ -260,8 +261,9 @@ mod tests {
         };
 
         // Add a different node's ID
-        grid.get_mut(1, 1)
-            .map(|cell| *cell = Some("different_node".to_string()));
+        if let Some(cell) = grid.get_mut(1, 1) {
+            *cell = Some("different_node".to_string());
+        }
 
         // Try to remove our node
         grid.update(&node, 1, 1, UpdateGridOperation::Remove)

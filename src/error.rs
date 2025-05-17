@@ -3,14 +3,14 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum GridEngineError {
     #[error(transparent)]
-    InnerGridError(#[from] InnerGridError),
+    InnerGrid(#[from] InnerGridError),
 
     #[error(transparent)]
-    ItemError(#[from] ItemError),
+    Item(#[from] ItemError),
 
     // Temporary error for unhandled errors, must be removed and all errors should be handled
     #[error("UnhandledError: {0}")]
-    UnhandledError(Box<dyn std::error::Error>),
+    Unhandled(Box<dyn std::error::Error>),
 }
 
 #[derive(Error, Debug)]
