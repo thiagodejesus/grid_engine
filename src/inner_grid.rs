@@ -1,22 +1,43 @@
+//! Internal grid implementation for managing the spatial layout of nodes.
+//!
+//! This module provides the core grid functionality, including:
+//! - Grid cell management
+//! - Dynamic row expansion
+//! - Node placement and removal operations
+//!
+//! The grid automatically expands vertically when needed, allowing for
+//! flexible layout management while maintaining horizontal constraints.
+
 use grid::Grid;
-
 use std::ops::{Deref, DerefMut};
-
 use crate::{error::InnerGridError, node::Node};
 
+/// Operation to perform when updating the grid.
 #[derive(Debug, Clone, Copy)]
 pub enum UpdateGridOperation {
+    /// Add a node to the grid cells
     Add,
+    /// Remove a node from the grid cells
     Remove,
 }
 
+/// Internal grid structure that manages the spatial layout of nodes.
+///
+/// The grid maintains a 2D layout of cells, where each cell can either be
+/// empty (None) or contain a node ID (Some(String)). The grid can dynamically
+/// expand vertically to accommodate new nodes.
 #[derive(Debug, Clone)]
 pub struct InnerGrid {
+    /// Whether the grid can expand vertically (add rows)
     can_expand_y: bool,
+    /// The underlying grid structure
     inner: Grid<Option<String>>,
 }
 
-// Allow automatic dereferencing to the inner Grid
+/// Allows using InnerGrid with methods from the underlying Grid type.
+///
+/// This implementation enables transparent access to Grid methods without
+/// explicitly accessing the inner field.
 impl Deref for InnerGrid {
     type Target = Grid<Option<String>>;
 
@@ -25,7 +46,10 @@ impl Deref for InnerGrid {
     }
 }
 
-// Allow mutable dereferencing
+/// Allows mutable access to the underlying Grid methods.
+///
+/// This implementation enables modifying the grid using Grid methods
+/// while maintaining InnerGrid's invariants.
 impl DerefMut for InnerGrid {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner
@@ -33,6 +57,33 @@ impl DerefMut for InnerGrid {
 }
 
 impl InnerGrid {
+    /// Creates a new grid with the specified dimensions.
+    ///
+    /// The grid is initially empty (all cells are None) and can expand
+    /// vertically by default.
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` - Initial number of rows
+    /// * `cols` - Number of columns (fixed)
+    pub fn new(rows: usize, cols: usize) -> Self {
+        let inner = Grid::new(rows, cols);
+        InnerGrid {
+            inner,
+            can_expand_y: true,
+        }
+    }
+
+    /// Handles automatic grid expansion when accessing cells.
+    ///
+    /// If the requested y-coordinate is beyond the current grid bounds
+    /// and expansion is allowed, the grid will automatically add rows
+    /// to accommodate the access.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X coordinate to check
+    /// * `y` - Y coordinate to check
     fn handle_expansion(&mut self, x: usize, y: usize) {
         let rows = self.rows();
         let cols = self.cols();
@@ -44,6 +95,20 @@ impl InnerGrid {
         }
     }
 
+    /// Gets a reference to the cell at the specified coordinates.
+    ///
+    /// If the coordinates are beyond the current grid bounds and expansion
+    /// is allowed, the grid will automatically expand to accommodate the access.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X coordinate of the cell
+    /// * `y` - Y coordinate of the cell
+    ///
+    /// # Returns
+    ///
+    /// * `Some(&Option<String>)` - Reference to the cell if coordinates are valid
+    /// * `None` - If coordinates are invalid or beyond expansion limits
     pub fn get(&mut self, x: usize, y: usize) -> Option<&Option<String>> {
         if self.inner.get(y, x).is_none() {
             self.handle_expansion(x, y);
@@ -52,7 +117,7 @@ impl InnerGrid {
         return self.inner.get(y, x);
     }
 
-    pub fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut Option<String>> {
+    pub(crate) fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut Option<String>> {
         if self.inner.get(y, x).is_none() {
             self.handle_expansion(x, y);
         }
@@ -60,15 +125,23 @@ impl InnerGrid {
         return self.inner.get_mut(y, x);
     }
 
-    pub fn new(rows: usize, cols: usize) -> Self {
-        let inner = Grid::new(rows, cols);
-        InnerGrid {
-            inner,
-            can_expand_y: true,
-        }
-    }
-
-    pub fn update(
+    /// Updates a cell in the grid based on the specified operation.
+    ///
+    /// Adds or removes a node's ID from the specified cell. When removing,
+    /// it only clears the cell if it contains the specified node's ID.
+    ///
+    /// # Arguments
+    ///
+    /// * `node` - The node being added or removed
+    /// * `x` - X coordinate of the cell to update
+    /// * `y` - Y coordinate of the cell to update
+    /// * `operation` - Whether to add or remove the node
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the update was successful
+    /// * `Err(InnerGridError)` - If the coordinates are invalid
+    pub(crate) fn update(
         &mut self,
         node: &Node,
         x: usize,
@@ -92,7 +165,15 @@ impl InnerGrid {
         Ok(())
     }
 
-    pub fn expand_rows(&mut self, rows: usize) {
+    /// Expands the grid by adding the specified number of rows.
+    ///
+    /// New rows are initialized with empty cells (None). This is used
+    /// internally when automatic expansion is triggered.
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` - Number of rows to add
+    pub(crate) fn expand_rows(&mut self, rows: usize) {
         let cols = self.cols();
 
         for _ in 0..rows {

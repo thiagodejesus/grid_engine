@@ -1,14 +1,47 @@
+//! Utility functions for grid operations and cell iteration.
+//!
+//! This module provides helper functions and structures for working with grid cells,
+//! particularly for iterating over rectangular regions within the grid.
+
 use crate::error::InnerGridError;
 
+/// Arguments for iterating over a rectangular region of cells.
+///
+/// This struct defines a rectangular area in the grid by specifying:
+/// - The top-left corner position (x, y)
+/// - The width and height of the rectangle
 #[derive(Debug, Clone, Copy)]
 pub struct ForCellArgs {
+    /// X coordinate of the top-left corner
     pub x: usize,
+    /// Y coordinate of the top-left corner
     pub y: usize,
+    /// Width of the rectangular region
     pub w: usize,
+    /// Height of the rectangular region
     pub h: usize,
 }
 
-pub fn for_cell(
+/// Iterates over cells in a rectangular region, executing a callback for each cell.
+///
+/// This function visits each cell in the specified rectangular region in row-major order
+/// (left to right, top to bottom) and executes the provided callback for each cell.
+///
+/// # Arguments
+///
+/// * `args` - Defines the rectangular region to iterate over
+/// * `callback` - Function to execute for each cell, receiving x and y coordinates
+///
+/// # Returns
+///
+/// * `Ok(())` if all cells were processed successfully
+/// * `Err(InnerGridError)` if the callback returns an error for any cell
+///
+/// # Error Handling
+///
+/// If the callback returns an error for any cell, iteration stops immediately
+/// and the error is propagated to the caller.
+pub(crate) fn for_cell(
     args: ForCellArgs,
     callback: &mut impl FnMut(usize, usize) -> Result<(), InnerGridError>,
 ) -> Result<(), InnerGridError> {

@@ -1,3 +1,28 @@
+//! Grid Engine manages a 2D grid system with support for adding, removing, and moving items.
+//!
+//! # Key Features
+//!
+//! - Automatic collision detection and handling
+//! - Event system for tracking changes
+//! - Expanding the grid on the y axis dynamically
+//!
+//! # Example
+//!
+//! ```
+//! use grid_engine::grid_engine::GridEngine;
+//!
+//! let mut grid = GridEngine::new(10, 12);
+//!
+//! // Add items to the grid
+//! grid.add_item("item1".to_string(), 2, 2, 2, 4).unwrap();
+//!
+//! // Move items (handles collisions automatically)
+//! grid.move_item("item1", 4, 4).unwrap();
+//!
+//! // Remove items
+//! grid.remove_item("item1").unwrap();
+//! ```
+
 use crate::error::{GridEngineError, InnerGridError, ItemError};
 use crate::grid_events::{ChangesEventValue, GridEvents};
 use crate::inner_grid::{InnerGrid, UpdateGridOperation};
@@ -5,39 +30,78 @@ use crate::node::Node;
 use crate::utils::{for_cell, ForCellArgs};
 use std::{collections::BTreeMap, fmt::Debug};
 
+/// Represents data for an item addition change
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct AddChangeData {
+    /// The node being added to the grid
     pub value: Node,
 }
 
+/// Represents data for an item removal change
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct RemoveChangeData {
+    /// The node being removed from the grid
     pub value: Node,
 }
 
+/// Represents data for an item movement change
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct MoveChangeData {
+    /// The original state of the node
     pub old_value: Node,
+    /// The new state of the node after movement
     pub new_value: Node,
 }
 
+/// Represents different types of changes that can occur in the grid
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Change {
+    /// Adding a new item to the grid
     Add(AddChangeData),
+    /// Removing an existing item from the grid
     Remove(RemoveChangeData),
+    /// Moving an item to a new position
     Move(MoveChangeData),
 }
 
+/// The main engine for managing a 2D grid system.
+///
+/// `GridEngine` provides functionality for:
+/// - Adding items to specific grid positions
+/// - Moving items while handling collisions
+/// - Removing items from the grid
+/// - Tracking changes through an event system
+/// - Expand the grid dynamically on the y axis
+///
+/// When items collide during placement or movement, the engine automatically
+/// repositions affected items to prevent overlapping, the default is to move the collided items down, increasing their y axis.
 #[derive(Debug)]
 pub struct GridEngine {
+    /// The underlying grid structure
     grid: InnerGrid,
-    // TODO: Understand deeply BTreeMap and if it is the best option
+    /// Map of item IDs to their Node representations
     items: BTreeMap<String, Node>,
+    /// Changes waiting to be applied
     pending_changes: Vec<Change>,
+    /// Event system for tracking grid changes
     pub events: GridEvents,
 }
 
 impl GridEngine {
+    /// Creates a new GridEngine with specified dimensions.
+    ///
+    /// # Arguments
+    ///
+    /// * `rows` - Initial number of rows in the grid
+    /// * `cols` - Initial number of columns in the grid
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use grid_engine::grid_engine::GridEngine;
+    ///
+    /// let grid = GridEngine::new(10, 10); // Creates a 10x10 grid
+    /// ```
     pub fn new(rows: usize, cols: usize) -> GridEngine {
         GridEngine {
             grid: InnerGrid::new(rows, cols),
@@ -65,10 +129,45 @@ impl GridEngine {
         cloned
     }
 
+    /// Gets a reference to the underlying grid structure.
+    ///
+    /// This provides access to the raw grid data for inspection purposes.
+    /// Note that modifications should be made through GridEngine's public methods
+    /// rather than directly manipulating the inner grid.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the InnerGrid instance
     pub fn get_inner_grid(&self) -> &InnerGrid {
         &self.grid
     }
 
+    /// Adds an item to the grid at the specified position.
+    ///
+    /// If the new item would collide with existing items, those items are
+    /// automatically repositioned to avoid overlap.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - Unique identifier for the item
+    /// * `x` - X coordinate (column) for item placement
+    /// * `y` - Y coordinate (row) for item placement
+    /// * `w` - Width of the item in grid cells
+    /// * `h` - Height of the item in grid cells
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(&Node)` - Reference to the newly added node
+    /// * `Err(GridEngineError)` - If item already exists or placement fails
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use grid_engine::grid_engine::GridEngine;
+    ///
+    /// let mut grid = GridEngine::new(10, 10);
+    /// grid.add_item("box1".to_string(), 0, 0, 2, 2).unwrap(); // 2x2 item at top-left
+    /// ```
     pub fn add_item(
         &mut self,
         id: String,
@@ -106,6 +205,26 @@ impl GridEngine {
         }));
     }
 
+    /// Removes an item from the grid by its ID.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - ID of the item to remove
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Node)` - The removed node
+    /// * `Err(GridEngineError)` - If item doesn't exist
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use grid_engine::grid_engine::GridEngine;
+    ///
+    /// let mut grid = GridEngine::new(10, 10);
+    /// grid.add_item("box1".to_string(), 0, 0, 2, 2).unwrap();
+    /// grid.remove_item("box1").unwrap(); // Removes the item
+    /// ```
     pub fn remove_item(&mut self, id: &str) -> Result<Node, GridEngineError> {
         let node = match self.items.get(id) {
             Some(node) => node,
@@ -122,6 +241,15 @@ impl GridEngine {
         Ok(node)
     }
 
+    /// Checks if a node would collide with any existing items at the specified position.
+    ///
+    /// This is used internally to detect potential collisions before making grid changes.
+    /// It considers the node's dimensions and any existing items in the target area.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<&Node>)` - List of nodes that would collide with the given node
+    /// * `Err(InnerGridError)` - If position check fails (e.g., out of bounds)
     fn will_collides_with(
         &self,
         node: &Node,
@@ -168,6 +296,15 @@ impl GridEngine {
         Ok(collides_with)
     }
 
+    /// Handles collision resolution when adding or moving items.
+    ///
+    /// When a collision is detected, this method:
+    /// 1. Identifies all affected items
+    /// 2. Calculates new positions for colliding items
+    /// 3. Creates appropriate move changes to relocate affected items
+    ///
+    /// The default collision resolution strategy moves affected items downward,
+    /// which may trigger dynamic grid expansion in the y-axis.
     fn handle_collision(
         &mut self,
         node: &Node,
@@ -193,6 +330,19 @@ impl GridEngine {
         Ok(())
     }
 
+    /// Creates a change operation to move a node to a new position.
+    ///
+    /// This method:
+    /// 1. Handles any collisions at the new position
+    /// 2. Checks if the node was already scheduled to move
+    /// 3. Creates a Move change operation if needed
+    ///
+    /// # Arguments
+    ///
+    /// * `node` - The node to move
+    /// * `new_x` - Target x coordinate
+    /// * `new_y` - Target y coordinate
+    /// * `grid` - The grid to check for collisions
     fn create_move_change(
         &mut self,
         node: Node,
@@ -220,6 +370,31 @@ impl GridEngine {
         Ok(())
     }
 
+    /// Moves an existing item to a new position in the grid.
+    ///
+    /// If the move would cause collisions, affected items are automatically
+    /// repositioned to prevent overlap.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - ID of the item to move
+    /// * `new_x` - New X coordinate
+    /// * `new_y` - New Y coordinate
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If move successful
+    /// * `Err(GridEngineError)` - If item doesn't exist or move invalid
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use grid_engine::grid_engine::GridEngine;
+    ///
+    /// let mut grid = GridEngine::new(10, 10);
+    /// grid.add_item("box1".to_string(), 0, 0, 2, 2).unwrap();
+    /// grid.move_item("box1", 2, 2).unwrap(); // Moves box to position 2,2
+    /// ```
     pub fn move_item(
         &mut self,
         id: &str,
@@ -241,7 +416,25 @@ impl GridEngine {
         Ok(())
     }
 
-    pub fn apply_changes(&mut self, changes: &Vec<Change>) -> Result<(), GridEngineError> {
+    /// Applies a batch of changes to the grid.
+    ///
+    /// This method handles the actual application of all pending changes to both
+    /// the grid structure and the item tracking system. Changes are applied in order,
+    /// and all operations are executed atomically - if any change fails, none of
+    /// the changes will be applied.
+    ///
+    /// After successful application, triggers change events to notify any registered listeners.
+    ///
+    /// # Arguments
+    ///
+    /// * `changes` - Vector of changes to apply (Add, Remove, or Move operations)
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If all changes were applied successfully
+    /// * `Err(GridEngineError)` - If any change application fails
+    /// ```
+    fn apply_changes(&mut self, changes: &Vec<Change>) -> Result<(), GridEngineError> {
         for change in changes.iter() {
             match &change {
                 Change::Add(data) => {

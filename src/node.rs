@@ -1,23 +1,66 @@
+//! Node representation and management for grid items.
+//!
+//! This module provides the [`Node`] type which represents an item in the grid.
+//! Each node has a position (x, y), dimensions (width, height), and a unique identifier.
+//! Nodes are managed by the grid engine and can be added, moved, or removed from the grid.
+
 use crate::{
     error::InnerGridError,
     inner_grid::{InnerGrid, UpdateGridOperation},
     utils::{for_cell, ForCellArgs},
 };
 
+/// Represents an item in the grid with position and dimensions.
+///
+/// A node occupies a rectangular area in the grid defined by:
+/// - Its top-left corner position (x, y)
+/// - Its dimensions (width, height)
+/// - A unique identifier
+///
+/// The node's area can be iterated over using the `for_cell` method,
+/// which visits each cell in the node's occupied space.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Node {
+    /// Unique identifier for the node
     pub id: String,
+    /// X coordinate of the top-left corner
     pub x: usize,
+    /// Y coordinate of the top-left corner
     pub y: usize,
+    /// Width of the node in grid cells
     pub w: usize,
+    /// Height of the node in grid cells
     pub h: usize,
 }
 
 impl Node {
+    /// Creates a new Node with the specified parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - Unique identifier for the node
+    /// * `x` - X coordinate of the top-left corner
+    /// * `y` - Y coordinate of the top-left corner
+    /// * `w` - Width in grid cells
+    /// * `h` - Height in grid cells
     pub(crate) fn new(id: String, x: usize, y: usize, w: usize, h: usize) -> Node {
         Node { id, x, y, w, h }
     }
 
+    /// Iterates over all cells occupied by this node.
+    ///
+    /// This method provides a way to perform operations on each cell
+    /// that the node occupies in the grid. The callback is called with
+    /// the coordinates of each cell.
+    ///
+    /// # Arguments
+    ///
+    /// * `callback` - Function to execute for each cell
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if all cells were processed successfully
+    /// * `Err(InnerGridError)` if the callback returns an error
     pub(crate) fn for_cell(
         &self,
         callback: &mut impl FnMut(usize, usize) -> Result<(), InnerGridError>,
@@ -33,6 +76,20 @@ impl Node {
         )
     }
 
+    /// Updates the grid state for this node.
+    ///
+    /// Used internally to modify the grid when a node is added, moved,
+    /// or removed. The operation type determines how the grid is updated.
+    ///
+    /// # Arguments
+    ///
+    /// * `grid` - The grid to update
+    /// * `update_operation` - The type of update to perform (Add/Remove)
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the update was successful
+    /// * `Err(InnerGridError)` if the update fails (e.g., out of bounds)
     pub(crate) fn update_grid(
         &self,
         grid: &mut InnerGrid,
