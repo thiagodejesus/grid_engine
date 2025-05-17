@@ -1,9 +1,19 @@
 [package]
 name = "grid-engine"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
+authors = ["Thiago Ramos"]
+description = "A flexible and efficient library for managing 2D grid-based layouts with automatic collision handling and dynamic vertical expansion"
+documentation = "https://docs.rs/grid-engine"
+homepage = "https://github.com/thiagodejesus/grid-engine"
+repository = "https://github.com/thiagodejesus/grid-engine"
+readme = "README.md"
+keywords = ["grid", "layout", "collision", "2d", "dashboard"]
+categories = ["data-structures", "engine"]
+license = "MIT"
 
 [dependencies]
-grid = {version = "0.16.2", features = ["serde"]}
+grid = { version = "0.16.2" }
 thiserror = "2.0.12"
 uuid = { version = "1.10.0", features = ["v4"] }
+
