@@ -1,16 +1,11 @@
-use serde::{Deserialize, Serialize};
-use wasm_bindgen::prelude::wasm_bindgen;
-
 use crate::{
     error::InnerGridError,
     inner_grid::{InnerGrid, UpdateGridOperation},
     utils::{for_cell, ForCellArgs},
 };
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
-#[wasm_bindgen]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Node {
-    #[wasm_bindgen(skip)]
     pub id: String,
     pub x: usize,
     pub y: usize,
@@ -18,15 +13,9 @@ pub struct Node {
     pub h: usize,
 }
 
-#[wasm_bindgen]
 impl Node {
-    pub fn new(id: String, x: usize, y: usize, w: usize, h: usize) -> Node {
+    pub(crate) fn new(id: String, x: usize, y: usize, w: usize, h: usize) -> Node {
         Node { id, x, y, w, h }
-    }
-
-    #[wasm_bindgen(js_name = getId)]
-    pub fn get_id(&self) -> String {
-        self.id.clone()
     }
 
     pub(crate) fn for_cell(
@@ -76,10 +65,10 @@ mod tests {
     fn test_get_id() {
         let node = Node::new("test_node".to_string(), 0, 0, 1, 1);
 
-        assert_eq!(node.get_id(), "test_node");
+        assert_eq!(node.id.clone(), "test_node");
         // Test that get_id returns a clone
-        let id1 = node.get_id();
-        let id2 = node.get_id();
+        let id1 = node.id.clone();
+        let id2 = node.id.clone();
         assert_eq!(id1, id2);
     }
 

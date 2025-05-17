@@ -85,10 +85,42 @@ impl std::fmt::Display for GridContent {
     }
 }
 
-fn print_grid(grid: &mut GridEngine) {
+fn get_grid_formatted(grid_engine: &GridEngine, cell_space: u8) -> String {
+    let mut grid_str = String::new();
+    grid_str.push_str("  ");
+    for i in 0..grid_engine.get_inner_grid().cols() {
+        grid_str.push_str(&format!(" {} ", i));
+    }
+    grid_str.push_str("\n");
+
+    grid_engine
+        .get_inner_grid()
+        .iter_rows()
+        .enumerate()
+        .for_each(|(row_number, row)| {
+            row.enumerate().for_each(|(index, cell)| {
+                if index == 0 {
+                    grid_str.push_str(&format!("{:0>2}", row_number));
+                }
+                return match cell {
+                    Some(item) => {
+                        grid_str.push_str(&format!("[{}]", item));
+                    }
+                    None => {
+                        grid_str.push_str(&format!("[{}]", " ".repeat(cell_space as usize)));
+                    }
+                };
+            });
+            grid_str.push_str("\n");
+        });
+
+    grid_str
+}
+
+fn print_grid(grid: &GridEngine) {
     // print!("\x1B[2J\x1B[1;1H");
     println!("Printing the grid");
-    grid.get_grid_view().print_grid();
+    println!("{}", get_grid_formatted(grid, 1));
 }
 
 fn handle_interaction(grid: &mut GridEngine, interaction: Interaction) {
@@ -138,9 +170,10 @@ fn scripted_mode() {
 
     let mut grid = GridEngine::new(10, 12);
 
-    grid.events.add_changes_listener(Box::new(|grid, event| {
+    grid.events.add_changes_listener(Box::new(|event| {
         println!("Event triggered: {:?}", event);
-        grid.print_grid();
+        // grid.
+        // grid.print_grid();
     }));
 
     let instructions = vec![

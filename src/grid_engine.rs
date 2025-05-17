@@ -1,56 +1,39 @@
 use crate::error::{GridEngineError, InnerGridError, ItemError};
 use crate::grid_events::{ChangesEventValue, GridEvents};
-use crate::grid_view::GridView;
 use crate::inner_grid::{InnerGrid, UpdateGridOperation};
 use crate::node::Node;
 use crate::utils::{for_cell, ForCellArgs};
-use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fmt::Debug};
-use wasm_bindgen::prelude::*;
 
-// TODO, remove unnecessary clones
-// TODO, Handle all `expect` and `unwrap` properly
-// TODO, set wasm as a optional feature
-
-#[wasm_bindgen]
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct AddChangeData {
-    #[wasm_bindgen(skip)]
     pub value: Node,
 }
 
-#[wasm_bindgen]
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct RemoveChangeData {
-    #[wasm_bindgen(skip)]
     pub value: Node,
 }
 
-#[wasm_bindgen]
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct MoveChangeData {
-    #[wasm_bindgen(skip)]
     pub old_value: Node,
-    #[wasm_bindgen(skip)]
     pub new_value: Node,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
-#[serde(tag = "type", content = "value")]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Change {
     Add(AddChangeData),
     Remove(RemoveChangeData),
     Move(MoveChangeData),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct GridEngine {
-    pub(crate) grid: InnerGrid,
+    grid: InnerGrid,
     // TODO: Understand deeply BTreeMap and if it is the best option
-    pub(crate) items: BTreeMap<String, Node>,
-    #[serde(skip)]
+    items: BTreeMap<String, Node>,
     pending_changes: Vec<Change>,
-    #[serde(skip)]
     pub events: GridEvents,
 }
 
@@ -64,18 +47,6 @@ impl GridEngine {
         }
     }
 
-    fn from_str(serialized: &str) -> Result<GridEngine, GridEngineError> {
-        let grid_view: GridView = match serde_json::from_str(serialized) {
-            Ok(grid_view) => grid_view,
-            Err(err) => {
-                println!("Error deserializing GridView {:?}", err);
-                return Err(GridEngineError::UnhandledError(Box::new(err)));
-            }
-        };
-
-        return Ok(GridEngine::from(&grid_view));
-    }
-
     fn new_node(&mut self, id: String, x: usize, y: usize, w: usize, h: usize) -> Node {
         let node = Node::new(id, x, y, w, h);
         node
@@ -84,6 +55,18 @@ impl GridEngine {
     fn create_add_change(&mut self, node: Node) {
         self.pending_changes
             .push(Change::Add(AddChangeData { value: node }));
+    }
+
+    /// Get the nodes sorted by id
+    pub fn get_nodes(&self) -> Vec<Node> {
+        let mut cloned: Vec<Node> = self.items.values().cloned().collect();
+        // Would be better to sort by some created_at
+        cloned.sort_by_key(|n| n.id.clone());
+        cloned
+    }
+
+    pub fn get_inner_grid(&self) -> &InnerGrid {
+        &self.grid
     }
 
     pub fn add_item(
@@ -287,55 +270,11 @@ impl GridEngine {
                 }
             }
         }
-        let grid_view = GridView::new(self);
 
-        self.events.trigger_changes_event(
-            &grid_view,
-            &ChangesEventValue {
-                changes: changes.iter().map(|change| change.clone()).collect(),
-            },
-        );
+        self.events.trigger_changes_event(&ChangesEventValue {
+            changes: changes.iter().map(|change| change.clone()).collect(),
+        });
         Ok(())
-    }
-
-    pub fn get_grid_view(&self) -> GridView {
-        GridView::new(self)
-    }
-}
-
-impl TryFrom<&Vec<u8>> for GridEngine {
-    type Error = GridEngineError;
-
-    fn try_from(bytes: &Vec<u8>) -> Result<Self, Self::Error> {
-        let serialized = match String::from_utf8(bytes.clone()) {
-            Ok(serialized) => serialized,
-            Err(err) => return Err(GridEngineError::UnhandledError(Box::new(err))),
-        };
-
-        let grid = match GridEngine::from_str(&serialized) {
-            Ok(grid) => grid,
-            Err(err) => return Err(err),
-        };
-
-        Ok(grid)
-    }
-}
-
-impl Into<Vec<u8>> for &GridEngine {
-    fn into(self) -> Vec<u8> {
-        let serialized = serde_json::to_string(&self).expect("Failed to serialize GridEngine");
-        serialized.into_bytes()
-    }
-}
-
-impl From<&GridView> for GridEngine {
-    fn from(grid_view: &GridView) -> Self {
-        GridEngine {
-            grid: grid_view.grid.clone(),
-            items: grid_view.items.clone(),
-            pending_changes: Vec::new(),
-            events: GridEvents::default(),
-        }
     }
 }
 
@@ -623,29 +562,10 @@ mod tests {
             .id
             .clone();
 
-        let nodes = engine.get_grid_view().get_nodes();
+        let nodes = engine.get_nodes();
         assert_eq!(nodes.len(), 2);
         assert_eq!(nodes[0].id, item_0_id);
         assert_eq!(nodes[1].id, item_1_id);
-    }
-
-    #[test]
-    fn test_serialize_and_deserialize() {
-        let mut engine = GridEngine::new(10, 10);
-        engine.add_item("0".to_string(), 0, 0, 2, 2).unwrap();
-        engine.add_item("1".to_string(), 0, 2, 2, 2).unwrap();
-
-        let serialized = engine.get_grid_view().serialized_as_str();
-        let deserialized_engine = GridEngine::from_str(&serialized).unwrap();
-
-        assert_eq!(
-            engine.get_grid_view().get_nodes(),
-            deserialized_engine.get_grid_view().get_nodes()
-        );
-        assert_eq!(
-            engine.get_grid_view().get_grid_formatted(2),
-            deserialized_engine.get_grid_view().get_grid_formatted(2)
-        );
     }
 
     #[test]
@@ -653,10 +573,8 @@ mod tests {
         let mut engine = GridEngine::new(10, 10);
         engine.add_item("0".to_string(), 0, 0, 2, 3).unwrap();
         engine.add_item("1".to_string(), 0, 6, 2, 2).unwrap();
-        engine.get_grid_view().print_grid();
         engine.move_item("1", 0, 2).unwrap();
 
-        engine.get_grid_view().print_grid();
         for_cell(
             ForCellArgs {
                 x: 0,
@@ -682,7 +600,6 @@ mod tests {
         engine.add_item("2".to_string(), 0, 6, 2, 4).unwrap();
         engine.move_item("2", 1, 2).unwrap();
 
-        engine.get_grid_view().print_grid();
         println!("Items: {:#?}", engine.items);
 
         engine.items.iter().for_each(|(_, node)| {

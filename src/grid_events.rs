@@ -1,14 +1,13 @@
 use std::fmt::Debug;
 
 use crate::grid_engine::Change;
-use crate::grid_view::GridView;
 
 #[derive(Debug, Clone)]
 pub struct ChangesEventValue {
     pub changes: Vec<Change>,
 }
 
-pub type ChangesEventFn = Box<dyn Fn(&GridView, &ChangesEventValue) -> () + Send + 'static + Sync>;
+pub type ChangesEventFn = Box<dyn Fn(&ChangesEventValue) -> () + Send + 'static + Sync>;
 
 pub struct ListenerFunction {
     pub id: String,
@@ -44,9 +43,9 @@ impl GridEvents {
         self.changes_listeners.retain(|listener| listener.id != id);
     }
 
-    pub fn trigger_changes_event(&mut self, grid: &GridView, value: &ChangesEventValue) {
+    pub fn trigger_changes_event(&mut self, value: &ChangesEventValue) {
         for listener in &mut self.changes_listeners {
-            (listener.function)(grid, value);
+            (listener.function)(value);
         }
     }
 }

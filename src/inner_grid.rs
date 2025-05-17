@@ -1,5 +1,4 @@
 use grid::Grid;
-use serde::{Deserialize, Serialize};
 
 use std::ops::{Deref, DerefMut};
 
@@ -11,7 +10,7 @@ pub enum UpdateGridOperation {
     Remove,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct InnerGrid {
     can_expand_y: bool,
     inner: Grid<Option<String>>,
