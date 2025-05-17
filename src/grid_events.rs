@@ -58,7 +58,7 @@ pub struct ChangesEventValue {
 ///
 /// These functions:
 /// - Receive a reference to `ChangesEventValue`
-pub type ChangesEventFn = Box<dyn Fn(&ChangesEventValue) -> () + Send + 'static + Sync>;
+pub type ChangesEventFn = Box<dyn Fn(&ChangesEventValue) + Send + 'static + Sync>;
 
 /// Represents a registered event listener function.
 ///
