@@ -115,9 +115,7 @@ impl Node {
         grid: &mut InnerGrid,
         update_operation: UpdateGridOperation,
     ) -> Result<(), InnerGridError> {
-        self.for_cell(&mut |x, y| {
-            grid.update(self, x, y, update_operation)
-        })?;
+        self.for_cell(&mut |x, y| grid.update(self, x, y, update_operation))?;
 
         Ok(())
     }
