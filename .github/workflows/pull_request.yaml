@@ -8,11 +8,20 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Build
+        run: cargo build --verbose
   formatting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rustfmt
       - uses: actions-rust-lang/rustfmt@v1
