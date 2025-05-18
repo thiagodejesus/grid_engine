@@ -27,7 +27,7 @@
 use crate::{
     error::InnerGridError,
     inner_grid::{InnerGrid, UpdateGridOperation},
-    utils::{for_cell, ForCellArgs},
+    utils::{ForCellArgs, for_cell},
 };
 
 /// Represents an item in the grid with position and dimensions.
@@ -115,9 +115,7 @@ impl Node {
         grid: &mut InnerGrid,
         update_operation: UpdateGridOperation,
     ) -> Result<(), InnerGridError> {
-        self.for_cell(&mut |x, y| {
-            return grid.update(self, x, y, update_operation);
-        })?;
+        self.for_cell(&mut |x, y| grid.update(self, x, y, update_operation))?;
 
         Ok(())
     }

@@ -25,7 +25,7 @@ fn print_grid(grid: &GridEngine) {
     for i in 0..grid.get_inner_grid().cols() {
         grid_str_formatted.push_str(&format!(" {} ", i));
     }
-    grid_str_formatted.push_str("\n");
+    grid_str_formatted.push('\n');
 
     grid.get_inner_grid()
         .iter_rows()
@@ -35,16 +35,16 @@ fn print_grid(grid: &GridEngine) {
                 if index == 0 {
                     grid_str_formatted.push_str(&format!("{:0>2}", row_number));
                 }
-                return match cell {
+                match cell {
                     Some(item) => {
                         grid_str_formatted.push_str(&format!("[{}]", item));
                     }
                     None => {
-                        grid_str_formatted.push_str(&format!("[{}]", " ".repeat(1)));
+                        grid_str_formatted.push_str(&format!("[{}]", " "));
                     }
                 };
             });
-            grid_str_formatted.push_str("\n");
+            grid_str_formatted.push('\n');
         });
 
     println!("{}", grid_str_formatted);
