@@ -46,7 +46,7 @@ pub enum UpdateGridOperation {
 /// The grid maintains a 2D layout of cells, where each cell can either be
 /// empty (None) or contain a node ID (Some(String)). The grid can dynamically
 /// expand vertically to accommodate new nodes.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct InnerGrid {
     /// Whether the grid can expand vertically (add rows)
     can_expand_y: bool,

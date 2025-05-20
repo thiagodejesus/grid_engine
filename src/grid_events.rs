@@ -48,7 +48,7 @@ use std::fmt::Debug;
 ///
 /// This structure is passed to event listeners whenever changes occur in the grid,
 /// providing details about what changes were made.
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct ChangesEventValue {
     /// Vector of changes that occurred in the grid
     pub changes: Vec<Change>,
