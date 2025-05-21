@@ -30,24 +30,29 @@
 //!
 //! ```
 //! use grid_engine::grid_engine::GridEngine;
+//! # use std::error::Error;
 //!
+//! # fn main() -> Result<(), Box<dyn Error>> {
 //! let mut grid = GridEngine::new(10, 12);
 //!
 //! // Add items to the grid
-//! grid.add_item("item1".to_string(), 2, 2, 2, 4).unwrap();
+//! grid.add_item("item1".to_string(), 2, 2, 2, 4)?;
 //!
 //! // Move items (handles collisions automatically)
-//! grid.move_item("item1", 4, 4).unwrap();
+//! grid.move_item("item1", 4, 4)?;
 //!
 //! // Remove items
-//! grid.remove_item("item1").unwrap();
+//! grid.remove_item("item1")?;
+//! #
+//! # Ok(())
+//! # }
 //! ```
 
 use crate::error::{GridEngineError, InnerGridError, ItemError};
 use crate::grid_events::{ChangesEventValue, GridEvents};
 use crate::inner_grid::{InnerGrid, UpdateGridOperation};
 use crate::node::Node;
-use crate::utils::{for_cell, ForCellArgs};
+use crate::utils::{ForCellArgs, for_cell};
 use std::{collections::BTreeMap, fmt::Debug};
 
 /// Represents data for an item addition change
@@ -131,17 +136,37 @@ impl GridEngine {
         }
     }
 
+    /// Creates a new node with the specified parameters.
     fn new_node(&mut self, id: String, x: usize, y: usize, w: usize, h: usize) -> Node {
         let node = Node::new(id, x, y, w, h);
         node
     }
 
+    /// Creates a change operation to add a new node to the grid.
     fn create_add_change(&mut self, node: Node) {
         self.pending_changes
             .push(Change::Add(AddChangeData { value: node }));
     }
 
     /// Get the nodes sorted by id
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use grid_engine::grid_engine::GridEngine;
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let mut grid = GridEngine::new(10, 10);
+    /// grid.add_item("b".to_string(), 0, 0, 2, 2).unwrap();
+    /// grid.add_item("a".to_string(), 0, 2, 2, 2).unwrap();
+    ///
+    /// let nodes = grid.get_nodes();
+    /// assert_eq!(nodes.len(), 2);
+    /// assert_eq!(nodes[0].id, "a");
+    /// assert_eq!(nodes[1].id, "b");
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn get_nodes(&self) -> Vec<Node> {
         let mut cloned: Vec<Node> = self.items.values().cloned().collect();
         // Would be better to sort by some created_at
@@ -158,6 +183,20 @@ impl GridEngine {
     /// # Returns
     ///
     /// A reference to the InnerGrid instance
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use grid_engine::grid_engine::GridEngine;
+    /// use std::error::Error;
+    ///
+    /// # fn main() -> Result<(), Box<dyn Error>> {
+    /// let grid = GridEngine::new(10, 10);
+    /// let inner_grid = grid.get_inner_grid();
+    /// assert_eq!(inner_grid.rows(), 10);
+    /// assert_eq!(inner_grid.cols(), 10);
+    /// # Ok(())
+    /// # }
     pub fn get_inner_grid(&self) -> &InnerGrid {
         &self.grid
     }
@@ -184,9 +223,19 @@ impl GridEngine {
     ///
     /// ```
     /// use grid_engine::grid_engine::GridEngine;
+    /// use std::error::Error;
     ///
+    /// # fn main() -> Result<(), Box<dyn Error>> {
     /// let mut grid = GridEngine::new(10, 10);
-    /// grid.add_item("box1".to_string(), 0, 0, 2, 2).unwrap(); // 2x2 item at top-left
+    /// grid.add_item("box1".to_string(), 0, 0, 2, 2)?; // 2x2 item at top-left
+    ///
+    /// // Check if the item was added correctly
+    /// let item = grid.get_nodes();
+    /// assert_eq!(item.len(), 1);
+    /// assert_eq!(item[0].id, "box1");
+    ///
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn add_item(
         &mut self,
@@ -240,10 +289,16 @@ impl GridEngine {
     ///
     /// ```
     /// use grid_engine::grid_engine::GridEngine;
+    /// use std::error::Error;
+    ///
+    /// # fn main() -> Result<(), Box<dyn Error>> {
     ///
     /// let mut grid = GridEngine::new(10, 10);
-    /// grid.add_item("box1".to_string(), 0, 0, 2, 2).unwrap();
-    /// grid.remove_item("box1").unwrap(); // Removes the item
+    /// grid.add_item("box1".to_string(), 0, 0, 2, 2)?;
+    /// grid.remove_item("box1")?; // Removes the item
+    ///
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn remove_item(&mut self, id: &str) -> Result<Node, GridEngineError> {
         let node = match self.items.get(id) {
@@ -410,10 +465,23 @@ impl GridEngine {
     ///
     /// ```
     /// use grid_engine::grid_engine::GridEngine;
+    /// # use std::error::Error;
     ///
+    /// # fn main() -> Result<(), Box<dyn Error>> {
+    /// 
     /// let mut grid = GridEngine::new(10, 10);
-    /// grid.add_item("box1".to_string(), 0, 0, 2, 2).unwrap();
-    /// grid.move_item("box1", 2, 2).unwrap(); // Moves box to position 2,2
+    /// grid.add_item("box1".to_string(), 0, 0, 2, 2)?;
+    /// grid.move_item("box1", 2, 2)?; // Moves box to position 2,2
+    /// 
+    /// // Check if the item was moved correctly
+    /// let item = grid.get_nodes();
+    /// assert_eq!(item.len(), 1);
+    /// assert_eq!(item[0].x, 2);
+    /// assert_eq!(item[0].y, 2);
+    /// 
+    /// # Ok(())
+    /// # }
+    /// 
     /// ```
     pub fn move_item(
         &mut self,

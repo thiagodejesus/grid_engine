@@ -139,10 +139,22 @@ impl GridEvents {
     ///
     /// let mut grid = GridEngine::new(10, 10);
     /// let listener_id = grid.events.add_changes_listener(Box::new(|_| {}));
-    /// grid.events.remove_changes_listener(&listener_id); // Listener removed
+    /// let removed = grid.events.remove_changes_listener(&listener_id); // Listener removed
+    ///
+    /// assert!(removed.is_some());
+    ///
     /// ```
-    pub fn remove_changes_listener(&mut self, id: &str) {
-        self.changes_listeners.retain(|listener| listener.id != id);
+    pub fn remove_changes_listener(&mut self, id: &str) -> Option<ChangesEventFn> {
+        if let Some(pos) = self
+            .changes_listeners
+            .iter()
+            .position(|listener| listener.id == id)
+        {
+            let listener = self.changes_listeners.remove(pos);
+            Some(listener.function)
+        } else {
+            None
+        }
     }
 
     /// Triggers the change event, notifying all registered listeners.
@@ -154,7 +166,7 @@ impl GridEvents {
     /// # Arguments
     ///
     /// * `value` - The event data containing information about the changes
-    pub fn trigger_changes_event(&mut self, value: &ChangesEventValue) {
+    pub(crate) fn trigger_changes_event(&mut self, value: &ChangesEventValue) {
         for listener in &mut self.changes_listeners {
             (listener.function)(value);
         }
