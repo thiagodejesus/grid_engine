@@ -137,7 +137,7 @@ impl InnerGrid {
         self.inner.get(y, x)
     }
 
-    pub(crate) fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut Option<String>> {
+    pub fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut Option<String>> {
         if self.inner.get(y, x).is_none() {
             self.handle_expansion(x, y);
         }
@@ -161,7 +161,7 @@ impl InnerGrid {
     ///
     /// * `Ok(())` - If the update was successful
     /// * `Err(InnerGridError)` - If the coordinates are invalid
-    pub(crate) fn update(
+    pub fn update(
         &mut self,
         node: &Node,
         x: usize,
