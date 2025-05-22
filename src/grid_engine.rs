@@ -206,8 +206,8 @@ impl GridEngine {
     }
 
     /// Creates a new node with the specified parameters.
-    fn new_node(&mut self, id: String, x: usize, y: usize, w: usize, h: usize) -> Node {
-        Node::new(id, x, y, w, h)
+    fn new_node(&mut self, id: impl Into<String>, x: usize, y: usize, w: usize, h: usize) -> Node {
+        Node::new(id.into(), x, y, w, h)
     }
 
     /// Creates a change operation to add a new node to the grid.
@@ -307,15 +307,16 @@ impl GridEngine {
     /// ```
     pub fn add_item(
         &mut self,
-        id: String,
+        id: impl Into<String>,
         x: usize,
         y: usize,
         w: usize,
         h: usize,
     ) -> Result<&Node, GridEngineError> {
+        let id = id.into();
         if self.items.contains_key(&id) {
             return Err(GridEngineError::Item(ItemError::ItemAlreadyExists {
-                id: id.clone(),
+                id: id,
             }));
         };
 

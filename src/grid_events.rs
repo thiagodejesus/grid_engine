@@ -94,8 +94,11 @@ impl ListenerFunction {
     ///
     /// * `id` - Unique identifier for the listener
     /// * `function` - The callback function to execute when changes occur
-    pub fn new(id: String, function: ChangesEventFn) -> Self {
-        Self { id, function }
+    pub fn new(id: impl Into<String>, function: ChangesEventFn) -> Self {
+        Self {
+            id: id.into(),
+            function,
+        }
     }
 }
 
