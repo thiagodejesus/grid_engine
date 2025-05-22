@@ -104,38 +104,44 @@ mod tests {
     fn test_for_cell_handles_zero_dimensions() {
         let mut callback = |_x, _y| Ok(());
 
-        assert!(for_cell(
-            ForCellArgs {
-                x: 0,
-                y: 0,
-                w: 0,
-                h: 1
-            },
-            &mut callback
-        )
-        .is_ok());
+        assert!(
+            for_cell(
+                ForCellArgs {
+                    x: 0,
+                    y: 0,
+                    w: 0,
+                    h: 1
+                },
+                &mut callback
+            )
+            .is_ok()
+        );
 
-        assert!(for_cell(
-            ForCellArgs {
-                x: 0,
-                y: 0,
-                w: 1,
-                h: 0
-            },
-            &mut callback
-        )
-        .is_ok());
+        assert!(
+            for_cell(
+                ForCellArgs {
+                    x: 0,
+                    y: 0,
+                    w: 1,
+                    h: 0
+                },
+                &mut callback
+            )
+            .is_ok()
+        );
 
-        assert!(for_cell(
-            ForCellArgs {
-                x: 0,
-                y: 0,
-                w: 0,
-                h: 0
-            },
-            &mut callback
-        )
-        .is_ok());
+        assert!(
+            for_cell(
+                ForCellArgs {
+                    x: 0,
+                    y: 0,
+                    w: 0,
+                    h: 0
+                },
+                &mut callback
+            )
+            .is_ok()
+        );
     }
 
     #[test]
@@ -148,15 +154,17 @@ mod tests {
             }
         };
 
-        assert!(for_cell(
-            ForCellArgs {
-                x: 1,
-                y: 1,
-                w: 2,
-                h: 1
-            },
-            &mut callback
-        )
-        .is_err());
+        assert!(
+            for_cell(
+                ForCellArgs {
+                    x: 1,
+                    y: 1,
+                    w: 2,
+                    h: 1
+                },
+                &mut callback
+            )
+            .is_err()
+        );
     }
 }

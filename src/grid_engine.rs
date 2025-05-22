@@ -207,8 +207,7 @@ impl GridEngine {
 
     /// Creates a new node with the specified parameters.
     fn new_node(&mut self, id: String, x: usize, y: usize, w: usize, h: usize) -> Node {
-        let node = Node::new(id, x, y, w, h);
-        node
+        Node::new(id, x, y, w, h)
     }
 
     /// Creates a change operation to add a new node to the grid.
@@ -314,8 +313,8 @@ impl GridEngine {
         w: usize,
         h: usize,
     ) -> Result<&Node, GridEngineError> {
-        if self.items.get(&id).is_some() {
-            return Err(GridEngineError::ItemError(ItemError::ItemAlreadyExists {
+        if self.items.contains_key(&id) {
+            return Err(GridEngineError::Item(ItemError::ItemAlreadyExists {
                 id: id.clone(),
             }));
         };
@@ -334,7 +333,7 @@ impl GridEngine {
             .items
             .get(&node_id)
             .ok_or(InnerGridError::MismatchedGridItem { id: node_id })?;
-        Ok(&node)
+        Ok(node)
     }
 
     fn create_remove_change(&mut self, node: &Node) {
@@ -372,7 +371,7 @@ impl GridEngine {
     pub fn remove_item(&mut self, id: &str) -> Result<Node, GridEngineError> {
         let node = match self.items.get(id) {
             Some(node) => node,
-            None => Err(GridEngineError::ItemError(ItemError::ItemNotFound {
+            None => Err(GridEngineError::Item(ItemError::ItemNotFound {
                 id: id.to_string(),
             }))?,
         }
@@ -425,7 +424,7 @@ impl GridEngine {
                             )?;
 
                             if !collides_with.contains(&node) {
-                                collides_with.push(&node);
+                                collides_with.push(node);
                             }
                         }
                     }
@@ -560,7 +559,7 @@ impl GridEngine {
     ) -> Result<(), GridEngineError> {
         let node = match self.items.get(id) {
             Some(node) => node,
-            None => Err(GridEngineError::ItemError(ItemError::ItemNotFound {
+            None => Err(GridEngineError::Item(ItemError::ItemNotFound {
                 id: id.to_string(),
             }))?,
         };
@@ -591,7 +590,7 @@ impl GridEngine {
     /// * `Ok(())` - If all changes were applied successfully
     /// * `Err(GridEngineError)` - If any change application fails
     /// ```
-    fn apply_changes(&mut self, changes: &Vec<Change>) -> Result<(), GridEngineError> {
+    fn apply_changes(&mut self, changes: &[Change]) -> Result<(), GridEngineError> {
         for change in changes.iter() {
             match &change {
                 Change::Add(data) => {
@@ -852,28 +851,26 @@ mod tests {
         assert!(
             engine
                 .will_collides_with(
-                    &engine.items.get(&item_0_id).unwrap(),
+                    engine.items.get(&item_0_id).unwrap(),
                     0,
                     0,
                     &mut engine.grid.clone()
                 )
                 .unwrap()
-                .len()
-                == 0
+                .is_empty()
         );
 
         // Asserts that does not collide with empty position
         assert!(
             engine
                 .will_collides_with(
-                    &engine.items.get(&item_0_id).unwrap(),
+                    engine.items.get(&item_0_id).unwrap(),
                     2,
                     2,
                     &mut engine.grid.clone()
                 )
                 .unwrap()
-                .len()
-                == 0
+                .is_empty()
         );
 
         // Asserts that collide with occupied position
@@ -883,7 +880,7 @@ mod tests {
         assert!(
             engine
                 .will_collides_with(
-                    &engine.items.get(&item_0_id).unwrap(),
+                    engine.items.get(&item_0_id).unwrap(),
                     1,
                     2,
                     &mut engine.grid.clone()
@@ -897,7 +894,7 @@ mod tests {
         assert!(
             engine
                 .will_collides_with(
-                    &engine.items.get(&item_0_id).unwrap(),
+                    engine.items.get(&item_0_id).unwrap(),
                     1,
                     1,
                     &mut engine.grid.clone()
