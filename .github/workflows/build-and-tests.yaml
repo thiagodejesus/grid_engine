@@ -1,11 +1,12 @@
-name: Pull Request
+name: Build and Tests
 
 on:
-  pull_request:
-    branches: ["main"]
-
-env:
-  CARGO_TERM_COLOR: always
+  workflow_call:
+    inputs:
+      ref:
+        required: false
+        type: string
+        description: "The branch, tag or SHA to checkout. Defaults to the current SHA."
 
 jobs:
   build:
