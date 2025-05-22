@@ -315,9 +315,7 @@ impl GridEngine {
     ) -> Result<&Node, GridEngineError> {
         let id = id.into();
         if self.items.contains_key(&id) {
-            return Err(GridEngineError::Item(ItemError::ItemAlreadyExists {
-                id: id,
-            }));
+            return Err(GridEngineError::Item(ItemError::ItemAlreadyExists { id }));
         };
 
         let node = self.new_node(id, x, y, w, h);
