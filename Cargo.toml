@@ -12,7 +12,6 @@ categories = ["data-structures"]
 license = "MIT"
 
 [dependencies]
-grid = { version = "0.16.2" }
+grid = "0.17.0"
 thiserror = "2.0.12"
 uuid = { version = "1.10.0", features = ["v4"] }
-
