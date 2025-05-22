@@ -42,15 +42,15 @@ use crate::{
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Node {
     /// Unique identifier for the node
-    pub(crate) id: String,
+    pub id: String,
     /// X coordinate of the top-left corner
-    pub(crate) x: usize,
+    pub x: usize,
     /// Y coordinate of the top-left corner
-    pub(crate) y: usize,
+    pub y: usize,
     /// Width of the node in grid cells
-    pub(crate) w: usize,
+    pub w: usize,
     /// Height of the node in grid cells
-    pub(crate) h: usize,
+    pub h: usize,
 }
 
 impl Node {
@@ -63,8 +63,14 @@ impl Node {
     /// * `y` - Y coordinate of the top-left corner
     /// * `w` - Width in grid cells
     /// * `h` - Height in grid cells
-    pub(crate) fn new(id: String, x: usize, y: usize, w: usize, h: usize) -> Node {
-        Node { id, x, y, w, h }
+    pub fn new(id: impl Into<String>, x: usize, y: usize, w: usize, h: usize) -> Node {
+        Node {
+            id: id.into(),
+            x,
+            y,
+            w,
+            h,
+        }
     }
 
     /// Iterates over all cells occupied by this node.

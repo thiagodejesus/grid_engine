@@ -61,7 +61,7 @@ pub struct ForCellArgs {
 ///
 /// If the callback returns an error for any cell, iteration stops immediately
 /// and the error is propagated to the caller.
-pub(crate) fn for_cell(
+pub fn for_cell(
     args: ForCellArgs,
     callback: &mut impl FnMut(usize, usize) -> Result<(), InnerGridError>,
 ) -> Result<(), InnerGridError> {

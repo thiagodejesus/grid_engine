@@ -206,8 +206,8 @@ impl GridEngine {
     }
 
     /// Creates a new node with the specified parameters.
-    fn new_node(&mut self, id: String, x: usize, y: usize, w: usize, h: usize) -> Node {
-        Node::new(id, x, y, w, h)
+    fn new_node(&mut self, id: impl Into<String>, x: usize, y: usize, w: usize, h: usize) -> Node {
+        Node::new(id.into(), x, y, w, h)
     }
 
     /// Creates a change operation to add a new node to the grid.
@@ -216,7 +216,7 @@ impl GridEngine {
             .push(Change::Add(AddChangeData { value: node }));
     }
 
-    /// Get the nodes sorted by id
+    /// Get the node sorted by id
     ///
     /// # Example
     ///
@@ -235,8 +235,8 @@ impl GridEngine {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn get_nodes(&self) -> Vec<Node> {
-        let mut cloned: Vec<Node> = self.items.values().cloned().collect();
+    pub fn get_nodes(&self) -> Vec<&Node> {
+        let mut cloned: Vec<&Node> = self.items.values().collect();
         // Would be better to sort by some created_at
         cloned.sort_by_key(|n| n.id.clone());
         cloned
@@ -307,16 +307,15 @@ impl GridEngine {
     /// ```
     pub fn add_item(
         &mut self,
-        id: String,
+        id: impl Into<String>,
         x: usize,
         y: usize,
         w: usize,
         h: usize,
     ) -> Result<&Node, GridEngineError> {
+        let id = id.into();
         if self.items.contains_key(&id) {
-            return Err(GridEngineError::Item(ItemError::ItemAlreadyExists {
-                id: id.clone(),
-            }));
+            return Err(GridEngineError::Item(ItemError::ItemAlreadyExists { id }));
         };
 
         let node = self.new_node(id, x, y, w, h);
