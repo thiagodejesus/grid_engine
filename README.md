@@ -16,36 +16,12 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-grid_engine = "0.1.0"
+grid_engine = {version = "*"}
 ```
 
 ## Usage
 
-Here's a basic example of using grid_engine:
-
-```rust
-use grid_engine::grid_engine::GridEngine;
-
-// Create a new 10x12 grid
-let mut grid = GridEngine::new(10, 12);
-
-// Add a change listener to track modifications
-grid.events.add_changes_listener(Box::new(|event| {
-    println!("Grid changed: {:?}", event.changes);
-}));
-
-// Add items to the grid (with automatic collision handling)
-grid.add_item("box1".to_string(), 0, 0, 2, 2).unwrap();
-grid.add_item("box2".to_string(), 0, 0, 2, 2).unwrap(); // Will be repositioned to avoid collision
-
-// Move items
-grid.move_item("box1", 2, 2).unwrap();
-
-// Remove items
-grid.remove_item("box2").unwrap();
-```
-
-Check out the [examples](examples/) directory for more usage examples.
+Check out the [examples](examples/) directory for usage examples.
 
 ## API Overview
 
