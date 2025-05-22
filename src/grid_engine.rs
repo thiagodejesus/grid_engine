@@ -59,23 +59,92 @@ use std::{collections::BTreeMap, fmt::Debug};
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct AddChangeData {
     /// The node being added to the grid
-    pub value: Node,
+    value: Node,
+}
+
+impl AddChangeData {
+    /// Creates a new AddChangeData instance
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - The node being added to the grid
+    ///
+    /// # Returns
+    ///
+    /// A new instance of AddChangeData
+    pub fn new(value: Node) -> Self {
+        Self { value }
+    }
+
+    /// Returns the node being added
+    pub fn value(&self) -> &Node {
+        &self.value
+    }
 }
 
 /// Represents data for an item removal change
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct RemoveChangeData {
     /// The node being removed from the grid
-    pub value: Node,
+    value: Node,
+}
+
+impl RemoveChangeData {
+    /// Creates a new RemoveChangeData instance
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - The node being removed from the grid
+    ///
+    /// # Returns
+    ///
+    /// A new instance of RemoveChangeData
+    pub fn new(value: Node) -> Self {
+        Self { value }
+    }
+
+    /// Returns the node being removed
+    pub fn value(&self) -> &Node {
+        &self.value
+    }
 }
 
 /// Represents data for an item movement change
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct MoveChangeData {
     /// The original state of the node
-    pub old_value: Node,
+    old_value: Node,
     /// The new state of the node after movement
-    pub new_value: Node,
+    new_value: Node,
+}
+
+impl MoveChangeData {
+    /// Creates a new MoveChangeData instance
+    ///
+    /// # Arguments
+    ///
+    /// * `old_value` - The original state of the node
+    /// * `new_value` - The new state of the node after movement
+    ///
+    /// # Returns
+    ///
+    /// A new instance of MoveChangeData
+    pub fn new(old_value: Node, new_value: Node) -> Self {
+        Self {
+            old_value,
+            new_value,
+        }
+    }
+
+    /// Returns the original state of the node
+    pub fn old_value(&self) -> &Node {
+        &self.old_value
+    }
+
+    /// Returns the new state of the node after movement
+    pub fn new_value(&self) -> &Node {
+        &self.new_value
+    }
 }
 
 /// Represents different types of changes that can occur in the grid
@@ -109,7 +178,7 @@ pub struct GridEngine {
     /// Changes waiting to be applied
     pending_changes: Vec<Change>,
     /// Event system for tracking grid changes
-    pub events: GridEvents,
+    events: GridEvents,
 }
 
 impl GridEngine {
@@ -162,8 +231,8 @@ impl GridEngine {
     ///
     /// let nodes = grid.get_nodes();
     /// assert_eq!(nodes.len(), 2);
-    /// assert_eq!(nodes[0].id, "a");
-    /// assert_eq!(nodes[1].id, "b");
+    /// assert_eq!(nodes[0].id(), "a");
+    /// assert_eq!(nodes[1].id(), "b");
     /// # Ok(())
     /// # }
     /// ```
@@ -232,7 +301,7 @@ impl GridEngine {
     /// // Check if the item was added correctly
     /// let item = grid.get_nodes();
     /// assert_eq!(item.len(), 1);
-    /// assert_eq!(item[0].id, "box1");
+    /// assert_eq!(item[0].id(), "box1");
     ///
     /// # Ok(())
     /// # }
@@ -468,20 +537,20 @@ impl GridEngine {
     /// # use std::error::Error;
     ///
     /// # fn main() -> Result<(), Box<dyn Error>> {
-    /// 
+    ///
     /// let mut grid = GridEngine::new(10, 10);
     /// grid.add_item("box1".to_string(), 0, 0, 2, 2)?;
     /// grid.move_item("box1", 2, 2)?; // Moves box to position 2,2
-    /// 
+    ///
     /// // Check if the item was moved correctly
     /// let item = grid.get_nodes();
     /// assert_eq!(item.len(), 1);
-    /// assert_eq!(item[0].x, 2);
-    /// assert_eq!(item[0].y, 2);
-    /// 
+    /// assert_eq!(item[0].x(), &2);
+    /// assert_eq!(item[0].y(), &2);
+    ///
     /// # Ok(())
     /// # }
-    /// 
+    ///
     /// ```
     pub fn move_item(
         &mut self,
@@ -552,10 +621,20 @@ impl GridEngine {
             }
         }
 
-        self.events.trigger_changes_event(&ChangesEventValue {
-            changes: changes.iter().map(|change| change.clone()).collect(),
-        });
+        self.events.trigger_changes_event(&ChangesEventValue::new(
+            changes.iter().map(|change| change.clone()).collect(),
+        ));
         Ok(())
+    }
+
+    /// Returns a reference to the grid events system.
+    pub fn events(&self) -> &GridEvents {
+        &self.events
+    }
+
+    /// Returns a mutable reference to the grid events system.
+    pub fn events_mut(&mut self) -> &mut GridEvents {
+        &mut self.events
     }
 }
 

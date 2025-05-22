@@ -28,9 +28,9 @@
 //! The grid automatically expands vertically when needed, allowing for
 //! flexible layout management while maintaining horizontal constraints.
 
+use crate::{error::InnerGridError, node::Node};
 use grid::Grid;
 use std::ops::{Deref, DerefMut};
-use crate::{error::InnerGridError, node::Node};
 
 /// Operation to perform when updating the grid.
 #[derive(Debug, Clone, Copy)]
@@ -174,10 +174,10 @@ impl InnerGrid {
 
         match operation {
             UpdateGridOperation::Add => {
-                *cell = Some(node.id.clone());
+                *cell = Some(node.id().to_string());
             }
             UpdateGridOperation::Remove => {
-                if cell.as_ref() == Some(&node.id) {
+                if cell.as_ref() == Some(&node.id().to_string()) {
                     *cell = None;
                 }
             }

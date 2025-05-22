@@ -27,7 +27,7 @@
 use crate::{
     error::InnerGridError,
     inner_grid::{InnerGrid, UpdateGridOperation},
-    utils::{for_cell, ForCellArgs},
+    utils::{ForCellArgs, for_cell},
 };
 
 /// Represents an item in the grid with position and dimensions.
@@ -42,15 +42,15 @@ use crate::{
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Node {
     /// Unique identifier for the node
-    pub id: String,
+    pub(crate) id: String,
     /// X coordinate of the top-left corner
-    pub x: usize,
+    pub(crate) x: usize,
     /// Y coordinate of the top-left corner
-    pub y: usize,
+    pub(crate) y: usize,
     /// Width of the node in grid cells
-    pub w: usize,
+    pub(crate) w: usize,
     /// Height of the node in grid cells
-    pub h: usize,
+    pub(crate) h: usize,
 }
 
 impl Node {
@@ -120,6 +120,31 @@ impl Node {
         })?;
 
         Ok(())
+    }
+
+    /// Returns the unique identifier of the node.
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    /// Returns the x coordinate of the node.
+    pub fn x(&self) -> &usize {
+        &self.x
+    }
+
+    /// Returns the y coordinate of the node.
+    pub fn y(&self) -> &usize {
+        &self.y
+    }
+
+    /// Returns the width of the node.
+    pub fn w(&self) -> &usize {
+        &self.w
+    }
+
+    /// Returns the height of the node.
+    pub fn h(&self) -> &usize {
+        &self.h
     }
 }
 
