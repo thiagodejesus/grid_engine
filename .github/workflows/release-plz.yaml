@@ -11,7 +11,7 @@ on:
 
 jobs:
   test:
-    uses: ./.github/workflows/test.yaml
+    uses: ./.github/workflows/build-and-tests.yaml
 
   release-plz-release:
     name: Release-plz release
