@@ -48,7 +48,7 @@
 //!
 //! See the `examples` directory for more usage examples.
 
-mod error;
+pub mod error;
 pub mod grid_engine;
 mod grid_events;
 mod inner_grid;
