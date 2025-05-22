@@ -8,7 +8,7 @@ documentation = "https://docs.rs/grid-engine"
 repository = "https://github.com/thiagodejesus/grid-engine"
 readme = "README.md"
 keywords = ["grid", "layout", "collision", "2d", "dashboard"]
-categories = ["data-structures", "engine"]
+categories = ["data-structures"]
 license = "MIT"
 
 [dependencies]
