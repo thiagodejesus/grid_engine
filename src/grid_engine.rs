@@ -621,7 +621,7 @@ impl GridEngine {
         }
 
         self.events
-            .trigger_changes_event(&ChangesEventValue::new(changes.iter().cloned().collect()));
+            .trigger_changes_event(&ChangesEventValue::new(changes.to_vec()));
         Ok(())
     }
 
