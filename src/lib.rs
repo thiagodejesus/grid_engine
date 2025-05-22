@@ -30,15 +30,20 @@
 //!
 //! ```rust
 //! use grid_engine::grid_engine::GridEngine;
+//! # use std::error::Error;
 //!
+//! # fn main() -> Result<(), Box<dyn Error>> {
 //! // Create a new 10x12 grid
 //! let mut grid = GridEngine::new(10, 12);
 //!
 //! // Add items (automatic collision handling)
-//! grid.add_item("box1".to_string(), 0, 0, 2, 2).unwrap();
+//! grid.add_item("box1".to_string(), 0, 0, 2, 2)?;
 //!
 //! // Move items
-//! grid.move_item("box1", 2, 2).unwrap();
+//! grid.move_item("box1", 2, 2)?;
+//!
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! See the `examples` directory for more usage examples.

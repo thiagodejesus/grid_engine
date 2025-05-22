@@ -30,7 +30,7 @@ use crate::error::InnerGridError;
 /// This struct defines a rectangular area in the grid by specifying:
 /// - The top-left corner position (x, y)
 /// - The width and height of the rectangle
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct ForCellArgs {
     /// X coordinate of the top-left corner
     pub x: usize,

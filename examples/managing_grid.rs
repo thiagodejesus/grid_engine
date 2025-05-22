@@ -55,7 +55,7 @@ fn main() {
 
     let mut grid = GridEngine::new(10, 12);
 
-    grid.events.add_changes_listener(Box::new(|event| {
+    grid.events_mut().add_changes_listener(Box::new(|event| {
         println!("Event triggered: {:#?}", event);
     }));
 

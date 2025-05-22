@@ -32,8 +32,8 @@
 //! let mut grid = GridEngine::new(10, 10);
 //!
 //! // Add a listener to track changes
-//! grid.events.add_changes_listener(Box::new(|event| {
-//!     println!("Grid changed: {:?}", event.changes);
+//! grid.events_mut().add_changes_listener(Box::new(|event| {
+//!     println!("Grid changed: {:?}", event.changes());
 //! }));
 //!
 //! // Make changes to the grid
@@ -48,10 +48,26 @@ use std::fmt::Debug;
 ///
 /// This structure is passed to event listeners whenever changes occur in the grid,
 /// providing details about what changes were made.
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct ChangesEventValue {
     /// Vector of changes that occurred in the grid
-    pub changes: Vec<Change>,
+    changes: Vec<Change>,
+}
+
+impl ChangesEventValue {
+    /// Creates a new `ChangesEventValue` instance with the specified changes.
+    ///
+    /// # Arguments
+    ///
+    /// * `changes` - A vector of changes that occurred in the grid
+    pub fn new(changes: Vec<Change>) -> Self {
+        Self { changes }
+    }
+
+    /// Returns a reference to the changes vector.
+    pub fn changes(&self) -> &Vec<Change> {
+        &self.changes
+    }
 }
 
 /// Type alias for change event listener functions.
@@ -66,9 +82,21 @@ pub type ChangesEventFn = Box<dyn Fn(&ChangesEventValue) + Send + 'static + Sync
 /// callback function to be executed when changes occur.
 pub struct ListenerFunction {
     /// Unique identifier for the listener
-    pub id: String,
+    id: String,
     /// The callback function to execute when changes occur
-    pub function: ChangesEventFn,
+    function: ChangesEventFn,
+}
+
+impl ListenerFunction {
+    /// Creates a new `ListenerFunction` with the specified ID and function.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - Unique identifier for the listener
+    /// * `function` - The callback function to execute when changes occur
+    pub fn new(id: String, function: ChangesEventFn) -> Self {
+        Self { id, function }
+    }
 }
 
 impl Debug for ListenerFunction {
@@ -111,16 +139,13 @@ impl GridEvents {
     /// use grid_engine::grid_engine::GridEngine;
     ///
     /// let mut grid = GridEngine::new(10, 10);
-    /// let listener_id = grid.events.add_changes_listener(Box::new(|event| {
-    ///     println!("Changes occurred: {:?}", event.changes);
+    /// let listener_id = grid.events_mut().add_changes_listener(Box::new(|event| {
+    ///     println!("Changes occurred: {:?}", event.changes());
     /// }));
     /// ```
     pub fn add_changes_listener(&mut self, function: ChangesEventFn) -> String {
         let id = uuid::Uuid::new_v4().to_string();
-        let listener = ListenerFunction {
-            id: id.clone(),
-            function,
-        };
+        let listener = ListenerFunction::new(id.clone(), function);
 
         self.changes_listeners.push(listener);
         id
@@ -138,11 +163,23 @@ impl GridEvents {
     /// use grid_engine::grid_engine::GridEngine;
     ///
     /// let mut grid = GridEngine::new(10, 10);
-    /// let listener_id = grid.events.add_changes_listener(Box::new(|_| {}));
-    /// grid.events.remove_changes_listener(&listener_id); // Listener removed
+    /// let listener_id = grid.events_mut().add_changes_listener(Box::new(|_| {}));
+    /// let removed = grid.events_mut().remove_changes_listener(&listener_id); // Listener removed
+    ///
+    /// assert!(removed.is_some());
+    ///
     /// ```
-    pub fn remove_changes_listener(&mut self, id: &str) {
-        self.changes_listeners.retain(|listener| listener.id != id);
+    pub fn remove_changes_listener(&mut self, id: &str) -> Option<ChangesEventFn> {
+        if let Some(pos) = self
+            .changes_listeners
+            .iter()
+            .position(|listener| listener.id == id)
+        {
+            let listener = self.changes_listeners.remove(pos);
+            Some(listener.function)
+        } else {
+            None
+        }
     }
 
     /// Triggers the change event, notifying all registered listeners.
@@ -154,7 +191,7 @@ impl GridEvents {
     /// # Arguments
     ///
     /// * `value` - The event data containing information about the changes
-    pub fn trigger_changes_event(&mut self, value: &ChangesEventValue) {
+    pub(crate) fn trigger_changes_event(&mut self, value: &ChangesEventValue) {
         for listener in &mut self.changes_listeners {
             (listener.function)(value);
         }
@@ -243,7 +280,7 @@ mod tests {
 
         // Create a mock change
         let node = crate::node::Node::new("test".to_string(), 0, 0, 1, 1);
-        let change = Change::Add(crate::grid_engine::AddChangeData { value: node });
+        let change = Change::Add(crate::grid_engine::AddChangeData::new(node));
         let event = ChangesEventValue {
             changes: vec![change.clone()],
         };
