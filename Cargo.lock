@@ -34,7 +34,7 @@ checksum = "71b01d27060ad58be4663b9e4ac9e2d4806918e8876af8912afbddd1a91d5eaa"
 
 [[package]]
 name = "grid-engine"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "grid",
  "thiserror",
