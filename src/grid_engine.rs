@@ -620,9 +620,8 @@ impl GridEngine {
             }
         }
 
-        self.events.trigger_changes_event(&ChangesEventValue::new(
-            changes.iter().map(|change| change.clone()).collect(),
-        ));
+        self.events
+            .trigger_changes_event(&ChangesEventValue::new(changes.iter().cloned().collect()));
         Ok(())
     }
 
