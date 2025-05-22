@@ -184,23 +184,6 @@ impl InnerGrid {
         }
         Ok(())
     }
-
-    /// Expands the grid by adding the specified number of rows.
-    ///
-    /// New rows are initialized with empty cells (None). This is used
-    /// internally when automatic expansion is triggered.
-    ///
-    /// # Arguments
-    ///
-    /// * `rows` - Number of rows to add
-    pub(crate) fn expand_rows(&mut self, rows: usize) {
-        let cols = self.cols();
-
-        for _ in 0..rows {
-            let row = vec![None; cols];
-            self.push_row(row);
-        }
-    }
 }
 
 #[cfg(test)]
