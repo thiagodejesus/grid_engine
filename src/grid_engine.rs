@@ -216,7 +216,7 @@ impl GridEngine {
             .push(Change::Add(AddChangeData { value: node }));
     }
 
-    /// Get the nodes sorted by id
+    /// Get the node sorted by id
     ///
     /// # Example
     ///
@@ -235,8 +235,8 @@ impl GridEngine {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn get_nodes(&self) -> Vec<Node> {
-        let mut cloned: Vec<Node> = self.items.values().cloned().collect();
+    pub fn get_nodes(&self) -> Vec<&Node> {
+        let mut cloned: Vec<&Node> = self.items.values().collect();
         // Would be better to sort by some created_at
         cloned.sort_by_key(|n| n.id.clone());
         cloned
