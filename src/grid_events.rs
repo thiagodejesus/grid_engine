@@ -41,8 +41,11 @@
 //! // The listener will be notified automatically
 //! ```
 
-use crate::grid_engine::Change;
-use std::fmt::Debug;
+use crate::{error::GridEventError, grid_engine::Change};
+use std::{
+    fmt::Debug,
+    sync::{Arc, Mutex},
+};
 
 /// Event data structure containing information about grid changes.
 ///
@@ -117,6 +120,7 @@ impl Debug for ListenerFunction {
 /// and remove listeners, as well as trigger events when changes happen.
 #[derive(Debug, Default)]
 pub struct GridEvents {
+    listener_id_counter: Arc<Mutex<usize>>,
     /// Collection of registered change event listeners
     changes_listeners: Vec<ListenerFunction>,
 }
@@ -149,12 +153,22 @@ impl GridEvents {
     pub fn add_changes_listener(
         &mut self,
         function: impl Fn(&ChangesEventValue) + Send + 'static + Sync,
-    ) -> String {
-        let id = uuid::Uuid::new_v4().to_string();
+    ) -> Result<String, GridEventError> {
+        let id = {
+            let mut counter = match self.listener_id_counter.lock() {
+                Ok(counter) => counter,
+                Err(_) => {
+                    return Err(GridEventError::ListenerIdNotGenerated);
+                }
+            };
+            *counter += 1;
+            format!("l_{}", counter)
+        };
+
         let listener = ListenerFunction::new(id.clone(), Box::new(function));
 
         self.changes_listeners.push(listener);
-        id
+        Ok(id)
     }
 
     /// Removes a previously registered change event listener.
@@ -167,13 +181,18 @@ impl GridEvents {
     ///
     /// ```
     /// use grid_engine::grid_engine::GridEngine;
+    /// use std::error::Error;
+    ///
+    /// # fn main() -> Result<(), Box<dyn Error>> {
     ///
     /// let mut grid = GridEngine::new(10, 10);
-    /// let listener_id = grid.events_mut().add_changes_listener(|_| {});
+    /// let listener_id = grid.events_mut().add_changes_listener(|_| {})?;
     /// let removed = grid.events_mut().remove_changes_listener(&listener_id); // Listener removed
     ///
     /// assert!(removed.is_some());
     ///
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn remove_changes_listener(&mut self, id: &str) -> Option<ChangesEventFn> {
         if let Some(pos) = self
@@ -212,7 +231,7 @@ mod tests {
     #[test]
     fn test_add_changes_listener() {
         let mut events = GridEvents::default();
-        let listener_id = events.add_changes_listener(|_| {});
+        let listener_id = events.add_changes_listener(|_| {}).unwrap();
 
         assert_eq!(events.changes_listeners.len(), 1);
         assert!(!listener_id.is_empty());
@@ -221,7 +240,7 @@ mod tests {
     #[test]
     fn test_remove_changes_listener() {
         let mut events = GridEvents::default();
-        let listener_id = events.add_changes_listener(|_| {});
+        let listener_id = events.add_changes_listener(|_| {}).unwrap();
 
         events.remove_changes_listener(&listener_id);
         assert_eq!(events.changes_listeners.len(), 0);
@@ -230,10 +249,14 @@ mod tests {
     #[test]
     fn test_multiple_listeners() {
         let mut events = GridEvents::default();
-        let _id1 = events.add_changes_listener(|_| {});
-        let _id2 = events.add_changes_listener(|_| {});
+        let _id1 = events.add_changes_listener(|_| {}).unwrap();
+        let _id2 = events.add_changes_listener(|_| {}).unwrap();
+        let _id3 = events.add_changes_listener(|_| {}).unwrap();
 
-        assert_eq!(events.changes_listeners.len(), 2);
+        assert_eq!(events.changes_listeners.len(), 3);
+        assert_ne!(_id1, _id2);
+        assert_ne!(_id2, _id3);
+        assert_ne!(_id1, _id3);
     }
 
     #[test]
@@ -242,10 +265,12 @@ mod tests {
         let counter = Arc::new(Mutex::new(0));
         let counter_clone = counter.clone();
 
-        events.add_changes_listener(move |_| {
-            let mut count = counter_clone.lock().unwrap();
-            *count += 1;
-        });
+        events
+            .add_changes_listener(move |_| {
+                let mut count = counter_clone.lock().unwrap();
+                *count += 1;
+            })
+            .unwrap();
 
         let changes = ChangesEventValue { changes: vec![] };
         events.trigger_changes_event(&changes);
@@ -261,10 +286,12 @@ mod tests {
         // Add two listeners that increment the same counter
         for _ in 0..2 {
             let counter_clone = counter.clone();
-            events.add_changes_listener(move |_| {
-                let mut count = counter_clone.lock().unwrap();
-                *count += 1;
-            });
+            events
+                .add_changes_listener(move |_| {
+                    let mut count = counter_clone.lock().unwrap();
+                    *count += 1;
+                })
+                .unwrap();
         }
 
         let changes = ChangesEventValue { changes: vec![] };
@@ -279,10 +306,12 @@ mod tests {
         let received_changes = Arc::new(Mutex::new(Vec::new()));
         let received_changes_clone = received_changes.clone();
 
-        events.add_changes_listener(move |event| {
-            let mut changes = received_changes_clone.lock().unwrap();
-            changes.extend(event.changes.clone());
-        });
+        events
+            .add_changes_listener(move |event| {
+                let mut changes = received_changes_clone.lock().unwrap();
+                changes.extend(event.changes.clone());
+            })
+            .unwrap();
 
         // Create a mock change
         let node = crate::node::Node::new("test".to_string(), 0, 0, 1, 1);
