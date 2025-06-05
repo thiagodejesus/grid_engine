@@ -30,3 +30,9 @@ pub enum ItemError {
     #[error("Item already exists: {id}")]
     ItemAlreadyExists { id: String },
 }
+
+#[derive(Error, Debug)]
+pub enum GridEventError {
+    #[error("Failed to generate listener id")]
+    ListenerIdNotGenerated,
+}

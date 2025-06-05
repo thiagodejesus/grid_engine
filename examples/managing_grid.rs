@@ -50,14 +50,14 @@ fn print_grid(grid: &GridEngine) {
     println!("{}", grid_str_formatted);
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Grid App");
 
     let mut grid = GridEngine::new(10, 12);
 
     grid.events_mut().add_changes_listener(|event| {
         println!("Event triggered: {:#?}", event);
-    });
+    })?;
 
     grid.add_item("a".to_string(), 2, 2, 2, 4).unwrap();
     print_grid(&grid);
@@ -69,4 +69,6 @@ fn main() {
     print_grid(&grid);
     grid.move_item("a", 1, 0).unwrap();
     print_grid(&grid);
+
+    Ok(())
 }

@@ -2,6 +2,8 @@
 
 A flexible and efficient Rust library for managing 2D grid-based layouts with automatic collision handling and dynamic vertical expansion.
 
+PS: This crate is on the early stages of development, so expect breaking changes and limited documentation.
+
 ## Features
 
 - 🎯 Automatic collision detection and resolution
@@ -33,6 +35,7 @@ The main components of the library are:
 - Error types for robust error handling
 
 For detailed API documentation, run:
+
 ```bash
 cargo doc --open
 ```
