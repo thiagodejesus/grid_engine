@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/thiagodejesus/grid_engine/compare/v0.1.1...v0.1.2) - 2025-06-05
+
+### Other
+
+- *(grid_events)* change event_listener id generation strategy to counter ([#13](https://github.com/thiagodejesus/grid_engine/pull/13))
+- update readme to remove no compilable examples and update instalation instruction ([#11](https://github.com/thiagodejesus/grid_engine/pull/11))
+
 ## [0.1.1](https://github.com/thiagodejesus/grid_engine/compare/v0.1.0...v0.1.1) - 2025-05-22
 
 ### Other
